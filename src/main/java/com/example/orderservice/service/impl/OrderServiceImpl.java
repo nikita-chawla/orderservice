@@ -23,7 +23,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order createOrderAfterValidating(Order order) {
         User user = restTemplate.getForObject("http://localhost:8081/users/" + order.getUserId(), User.class);
-        Product product = restTemplate.getForObject("http://localhost:8082/products/" + order.getProductId(), Product.class);
+        Product product = restTemplate.getForObject("http://localhost:8083/products/" + order.getProductId(), Product.class);
         if (user != null && product != null) {
             return createOrder(order);
         } else {

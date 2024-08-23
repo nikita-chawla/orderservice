@@ -2,6 +2,7 @@ package com.example.orderservice.logging;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +12,7 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,10 +32,13 @@ public class LogAspect {
     @Around("execution(* *.*(..)) && @within(org.springframework.web.bind.annotation.RestController)")
     public Object logRequestAndResponse(ProceedingJoinPoint joinPoint) throws Throwable {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+        // Wrap the response in ContentCachingResponseWrapper directly in the aspect
+        ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
 
         // Capture request details
         String method = request.getMethod();
-        String requestURI = request.getRequestURL().toString();
+        String requestURI = request.getRequestURI();
         String queryString = request.getQueryString();
 
         // Collect headers
@@ -65,8 +70,8 @@ public class LogAspect {
         Object result = joinPoint.proceed();
 
         // Log response details
-        System.out.println("Response: " + objectMapper.writeValueAsString(result));
-        logger.info("Response: {}", objectMapper.writeValueAsString(result));
+        logger.info("This method is successful -> requestURI: {}, httpMethod: {}, Response Status: {}, Response: {}",
+                requestURI, method, response.getStatus(), objectMapper.writeValueAsString(result));
 
         return result;
     }
